@@ -29,11 +29,12 @@ def test_lognormal():
     assert stats.lognorm.ppf(0.5, s=1.0, scale=np.exp(0.0)) == pytest.approx(1.0)
     data = np.exp(np.array([-0.5, 0.0, 0.2, 0.7, 1.1]))
     fit = fit_distribution(data, stats.lognorm)
-    log_data = np.log(data)
-    assert fit["params"]["mu"] == pytest.approx(np.mean(log_data))
-    assert fit["params"]["sigma"] == pytest.approx(np.std(log_data, ddof=0))
-    with pytest.raises(ValueError):
-        fit_distribution([1.0, 0.0, 2.0], stats.lognorm)
+    shape,location,scale=stats.lognorm.fit(data)
+    assert fit["params"]["mu"] == pytest.approx(np.log(scale))
+    assert fit["params"]["sigma"] == pytest.approx(shape)
+    assert fit["params"]["loc"] == pytest.approx(location)
+    shifted=fit_distribution([1.,0.,2.,-1.,3.],stats.lognorm)
+    assert shifted["params"]["loc"] < -1
 
 
 def test_laplace():

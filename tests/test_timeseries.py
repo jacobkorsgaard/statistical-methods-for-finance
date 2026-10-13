@@ -124,8 +124,11 @@ def test_nonstationary_ar1(phi):
         (simulate_ar1, (phi, 1, 5)),
         (ar1_forecast, (2, phi, 0, 3)),
     ]:
-        with pytest.raises(ValueError):
-            f(*args)
+        if f in (ar1_unconditional_variance, ar1_acf) or not np.isfinite(phi):
+            with pytest.raises(ValueError):
+                f(*args)
+        else:
+            assert np.isfinite(f(*args)).all()
 
 
 @pytest.mark.parametrize("bad", [0, -1, 1.5, True])

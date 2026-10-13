@@ -1,6 +1,6 @@
 """Conditional joint ARMA–GARCH estimation and fixed-parameter prediction.
 
-The mean uses an unconditional location mu and plus-MA coefficients. Presample
+The mean uses an equilibrium location mu and plus-MA coefficients. Presample
 centered observations and innovations are zero; variance starts at the sample
 variance of the first 75 observations. This is conditional, not exact likelihood.
 """
@@ -9,12 +9,9 @@ from dataclasses import dataclass
 import numpy as np
 from scipy.optimize import minimize
 from scipy.signal import lfilter
-from scipy.special import gammaln, softmax
+from scipy.special import gammaln
 from scipy.stats import norm
 from statsmodels.tools.numdiff import approx_fprime, approx_hess
-from statsmodels.tsa.statespace.tools import (
-    constrain_stationary_univariate, unconstrain_stationary_univariate,
-)
 from ._validation import _finite_scalar
 
 
@@ -29,28 +26,26 @@ def filter_arma_garch(values, mu, ar, ma, omega, alpha, beta, initial_variance):
     """Return conditional means, innovations and variances without look-ahead.
 
     initial_variance is supplied explicitly so future observations cannot change
-    the initialization. Require stationary GARCH coefficients and invertible MA.
+    the initialization. Finite paths allow unit or above-unit persistence and
+    arbitrary finite AR/MA coefficients.
     """
     x = _series(values)
     mu = _finite_scalar(mu, "mu")
     ar, ma = np.asarray(ar, dtype=float), np.asarray(ma, dtype=float)
     if ar.ndim != 1 or ma.ndim != 1 or not np.isfinite(ar).all() or not np.isfinite(ma).all():
         raise ValueError("ar and ma must be finite coefficient vectors")
-    from .linear import is_stationary_ar
-    from .linear import is_invertible_ma
-    if len(ar) and not is_stationary_ar(ar):
-        raise ValueError("AR coefficients must be stationary")
-    if len(ma) and not is_invertible_ma(ma):
-        raise ValueError("MA coefficients must be invertible")
     omega = _finite_scalar(omega,"omega")
     initial_variance = _finite_scalar(initial_variance,"initial_variance")
     alpha,beta = np.atleast_1d(np.asarray(alpha,float)),np.atleast_1d(np.asarray(beta,float))
     if (alpha.ndim != 1 or beta.ndim != 1 or not len(alpha) or not len(beta)
             or not np.isfinite(alpha).all() or not np.isfinite(beta).all()):
         raise ValueError("alpha and beta must be nonempty finite coefficient vectors")
-    if omega <= 0 or min(alpha.min(), beta.min()) < 0 or alpha.sum()+beta.sum() >= 1 or initial_variance <= 0:
-        raise ValueError("require positive variance, omega>0 and alpha,beta>=0 with sum<1")
-    return _filter(x, mu, ar, ma, omega, alpha, beta, initial_variance)
+    if omega <= 0 or min(alpha.min(), beta.min()) < 0 or initial_variance <= 0:
+        raise ValueError("require positive variance, omega>0 and alpha,beta>=0")
+    filtered = _filter(x, mu, ar, ma, omega, alpha, beta, initial_variance)
+    if not all(np.isfinite(value).all() for value in filtered) or np.any(filtered[2] <= 0):
+        raise ValueError("conditional recursion produced nonfinite values or nonpositive variance")
+    return filtered
 
 
 def _filter(x, mu, ar, ma, omega, alpha, beta, initial_variance):
@@ -190,17 +185,18 @@ class JointARMAGARCHFit:
 def fit_arma_garch(values, ar_start, ma_start, mu_start, distribution="normal", *,
                    hold_back=2, n_starts=3, seed=111, garch_order=(1,1),
                    start_fit=None, compute_inference=True):
-    """Fit a stationary/invertible ARMA–GARCH(p,q) by conditional joint MLE.
+    """Fit ARMA–GARCH(p,q) by conditional joint MLE.
 
     garch_order uses (variance lags, squared-innovation lags), opposite to
     arch software argument names. Missing presample squares/variances use
     initial_variance; the first hold_back likelihood contributions are omitted.
 
-    Gaussian or unit-variance Student-t density; parameter transformations enforce
-    root and variance constraints. Multiple deterministic starts do not guarantee
+    Gaussian or unit-variance Student-t density. Omega and nu-2 use exponential
+    coordinates; alpha/beta use squares, including zero. AR/MA coefficients and persistence have
+    no stationarity/invertibility restrictions or numerical boxes. Multiple starts do not guarantee
     a global optimum. start_fit adds a warm optimizer start; compute_inference=False
     skips coefficient uncertainty for repeated forecasting fits. The returned fit records success and objectives for every
-    start. Boundary fits should not be assigned a reliable long-run variance.
+    start. Unit/above-unit persistence has no finite unconditional variance.
     """
     x = _series(values)
     ar_start, ma_start = np.asarray(ar_start, float), np.asarray(ma_start, float)
@@ -220,26 +216,27 @@ def fit_arma_garch(values, ar_start, ma_start, mu_start, distribution="normal", 
     if initial_variance <= 0:
         raise ValueError("nonconstant observations required")
     mu_start = _finite_scalar(mu_start,"mu_start")
-    # Validate starts before mapping coefficients to unconstrained root parameters.
     filter_arma_garch(x,mu_start,ar_start,ma_start,.1,.1,.8,initial_variance)
-    initial = np.r_[mu_start, unconstrain_stationary_univariate(ar_start) if p else [],
-        unconstrain_stationary_univariate(-ma_start) if q else [],
-        np.log(.04*np.var(x)), np.repeat(np.log((.08/na)/.04),na),
-        np.repeat(np.log((.88/nb)/.04),nb),
+    initial = np.r_[mu_start, ar_start, ma_start,
+        np.log(.04*np.var(x)), np.repeat(np.sqrt(.08/na),na),
+        np.repeat(np.sqrt(.88/nb),nb),
         [np.log(6.)] if distribution=="t" else []]
 
     def decode(theta):
-        ar = constrain_stationary_univariate(theta[1:1+p]) if p else np.array([])
-        ma = -constrain_stationary_univariate(theta[1+p:1+p+q]) if q else np.array([])
+        ar,ma = theta[1:1+p],theta[1+p:1+p+q]
         offset = 1+p+q
         omega = np.exp(theta[offset])
-        weights = softmax(np.r_[theta[offset+1:offset+1+na+nb],0.])
-        alpha,beta = weights[:na]*(1-1e-8),weights[na:na+nb]*(1-1e-8)
+        weights = theta[offset+1:offset+1+na+nb]**2
+        alpha,beta = weights[:na],weights[na:]
         df = 2+np.exp(theta[-1]) if distribution=="t" else None
         return theta[0],ar,ma,omega,alpha,beta,df
 
+    @np.errstate(over="ignore", invalid="ignore", divide="ignore", under="ignore")
     def objective(theta):
         mu,ar,ma,omega,alpha,beta,df = decode(theta)
+        if (not np.isfinite(omega) or omega <= 0 or not np.isfinite(alpha).all()
+                or not np.isfinite(beta).all() or (df is not None and (not np.isfinite(df) or df <= 2))):
+            return 1e100
         _,e,h = _filter(x,mu,ar,ma,omega,alpha,beta,initial_variance)
         e,h = e[hold_back:],h[hold_back:]
         if not np.isfinite(e).all() or not np.isfinite(h).all() or np.any(h<=0):
@@ -249,37 +246,30 @@ def fit_arma_garch(values, ar_start, ma_start, mu_start, distribution="normal", 
         else:
             log_density = (gammaln((df+1)/2)-gammaln(df/2)-.5*np.log(np.pi*(df-2))
                            -.5*np.log(h)-(df+1)/2*np.log1p(e**2/(h*(df-2))))
-        return -float(np.sum(log_density))
+        value = -float(np.sum(log_density))
+        return value if np.isfinite(value) else 1e100
 
-    bounds = [(None,None)]+[(-20,20)]*(p+q)+[(-20,10)]+[(-15,15)]*(na+nb)
-    if distribution=="t": bounds += [(-5,7)]
     warm = None
     if start_fit is not None:
         if (len(start_fit.ar)!=p or len(start_fit.ma)!=q or start_fit.volatility_order!=garch_order
                 or (start_fit.df is not None)!=(distribution=="t")):
             raise ValueError("start_fit must have the same model orders and density")
         weights = np.r_[np.atleast_1d(start_fit.alpha),np.atleast_1d(start_fit.beta)]
-        slack = max(1-weights.sum(),1e-8)
-        warm = np.r_[start_fit.mu,
-            unconstrain_stationary_univariate(start_fit.ar) if p else [],
-            unconstrain_stationary_univariate(-start_fit.ma) if q else [],
-            np.log(start_fit.omega),np.log(np.maximum(weights,1e-12)/slack),
+        warm = np.r_[start_fit.mu, start_fit.ar, start_fit.ma,
+            np.log(start_fit.omega),np.sqrt(weights),
             [np.log(start_fit.df-2)] if distribution=="t" else []]
-        for i,(lower,upper) in enumerate(bounds):
-            if lower is not None: warm[i]=max(warm[i],lower)
-            if upper is not None: warm[i]=min(warm[i],upper)
     generator = np.random.default_rng(seed)
     results = []
     for k in range(n_starts):
         if warm is not None:
-            # Warm solution and an interior variance reset avoid inheriting only a boundary solution.
+            # Check the previous solution and a fresh variance start.
             start = warm.copy() if k==0 else initial.copy() if k==1 else initial+generator.normal(0,.35,len(initial))
         else:
             start = initial.copy() if k==0 else initial+generator.normal(0,.35,len(initial))
-        result = minimize(objective,start,method="L-BFGS-B",bounds=bounds,
+        result = minimize(objective,start,method="L-BFGS-B",
                           options={"maxiter":1500,"ftol":1e-10,"gtol":1e-5,"maxls":40})
         results.append(result)
-    successful = [r for r in results if r.success and np.isfinite(r.fun)]
+    successful = [r for r in results if r.success and np.isfinite(r.fun) and r.fun < 1e100]
     if not successful:
         raise RuntimeError("No joint optimization start converged")
     best = min(successful,key=lambda r:r.fun)
@@ -310,7 +300,7 @@ def fit_arma_garch(values, ar_start, ma_start, mu_start, distribution="normal", 
                 -.5*np.log(h)-(df+1)/2*np.log1p(e**2/(h*(df-2))))
 
     se,pvalues,status = _wald_inference(natural_loglikelihood_obs,natural_parameters)
-    boundary = alpha.sum()+beta.sum()>=1-1e-4 or min(alpha.min(),beta.min())<=1e-6
+    boundary = min(alpha.min(),beta.min())<=1e-6
     if boundary and status=="Computed": status="Nominal only: near a variance-parameter boundary"
     fit.inference = {name:{"standard_error":error,"p_value":pvalue,"status":status}
                      for name,error,pvalue in zip(names,se,pvalues)}

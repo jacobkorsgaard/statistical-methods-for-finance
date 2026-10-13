@@ -15,9 +15,7 @@ def test_summary_matches_scipy_likelihood_and_information_criteria(family):
     assert result["log_likelihood"] == pytest.approx(ll)
     assert result["aic"] == pytest.approx(-2 * ll + 2 * k)
     assert result["bic"] == pytest.approx(-2 * ll + np.log(len(x)) * k)
-    direct = getattr(stats, family).fit(
-        x, **({"floc": 0} if family == "lognorm" else {})
-    )
+    direct = getattr(stats, family).fit(x)
     np.testing.assert_allclose(
         result["distribution"].ppf([0.05, 0.95]),
         getattr(stats, family)(*direct).ppf([0.05, 0.95]),

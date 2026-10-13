@@ -10,11 +10,11 @@ from ._validation import _sample
 
 
 def fit_distribution(data, distribution):
-    """Fit norm, t, laplace, lognorm (loc=0), or skewnorm using SciPy MLE.
+    """Fit norm, t, laplace, lognorm, or skewnorm using SciPy MLE.
 
     distribution is one of these SciPy generators, or its name as a string.
     The returned dict contains params, distribution, log_likelihood, aic and bic.
-    The lognormal params describe log(X); Student-t scale is not its SD.
+    The lognormal params describe log(X-loc); Student-t scale is not its SD.
     Numerical SciPy fits inherit starting-value/local-maximum limitations.
     """
     x = _sample(data)
@@ -26,11 +26,9 @@ def fit_distribution(data, distribution):
     if name not in {"norm", "t", "laplace", "lognorm", "skewnorm"}:
         raise ValueError("unsupported distribution")
     if name == "lognorm":
-        if np.any(x <= 0):
-            raise ValueError("lognormal observations must be strictly positive")
-        shape, _, scale = distribution.fit(x, floc=0)
-        params = {"mu": np.log(scale), "sigma": shape}
-        frozen = distribution(shape, loc=0, scale=scale)
+        shape, location, scale = distribution.fit(x)
+        params = {"mu": np.log(scale), "sigma": shape, "loc": location}
+        frozen = distribution(shape, loc=location, scale=scale)
     elif name == "t":
         shape, location, scale = distribution.fit(x)
         params = {"mu": location, "scale": scale, "df": shape}

@@ -50,7 +50,7 @@ def test_conditional_mle_likelihood_matches_independent_density(distribution):
     assert fit.nobs==498
 
 
-@pytest.mark.parametrize('parameters',[(.1,.2,.8,1.),(-.1,.2,.5,1.),(.1,.2,.5,0.)])
+@pytest.mark.parametrize('parameters',[(-.1,.2,.5,1.),(.1,-.2,.5,1.),(.1,.2,.5,0.)])
 def test_invalid_variance_parameters(parameters):
     with pytest.raises(ValueError):filter_arma_garch([1.,2.,3.],0.,[.4],[.2],*parameters)
 
@@ -112,3 +112,26 @@ def test_singular_inference_is_unavailable():
     errors,pvalues,status=_wald_inference(lambda theta:np.ones(10),[1.,2.])
     assert np.isnan(errors).all() and np.isnan(pvalues).all()
     assert status.startswith('Unavailable')
+
+
+@pytest.mark.parametrize("persistence", [1., 1.08])
+def test_unit_and_above_unit_persistence_with_ar_ma_outside_unit_circle(persistence):
+    x=np.array([.1,-.2,.4,.8,-.3])
+    fit=JointARMAGARCHFit(.1,np.array([1.05]),np.array([1.02]),.1,.2,
+                         persistence-.2,None,x,1.,1,-10.,[])
+    _,e,h=fit.filter()
+    for t in range(1,len(x)):
+        assert h[t]==pytest.approx(.1+.2*e[t-1]**2+(persistence-.2)*h[t-1])
+    means,variances,paths=fit.forecast(3,simulations=100,seed=42)
+    assert variances[1]==pytest.approx(.1+persistence*variances[0])
+    assert np.isfinite(means).all() and np.isfinite(paths).all()
+
+
+def test_estimation_can_return_persistence_above_one():
+    from finstats.simulation import simulate_garch11
+    x,_=simulate_garch11(.05,.1,.95,450,rng=51,burn_in=0,initial_variance=1.)
+    x=x/np.std(x)
+    fit=fit_arma_garch(x,[],[],0.,n_starts=2,compute_inference=False)
+    assert np.sum(fit.alpha)+np.sum(fit.beta)>1
+    _,e,h=fit.filter()
+    assert fit.loglikelihood==pytest.approx(stats.norm.logpdf(e[2:],scale=np.sqrt(h[2:])).sum())

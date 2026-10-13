@@ -28,8 +28,7 @@ def test_constant_variance_ar_population_moments():
 
 
 @pytest.mark.parametrize("arguments", [
-    (1, .1, .1, .8, 10), (-1, .1, .1, .8, 10),
-    (.5, .1, .2, .8, 10), (.5, 0, .1, .8, 10),
+     (.5, 0, .1, .8, 10),
     (.5, .1, -.1, .8, 10), (.5, .1, .1, .8, 0),
     (.5, .1, .1, .8, True), (.5, .1, .1, .8, 1.5),
 ])
@@ -41,3 +40,11 @@ def test_invalid_parameters(arguments):
 def test_nonfinite_population_mean():
     with pytest.raises(ValueError):
         simulate_ar1_garch11(.5, .1, .1, .8, 10, mu=np.nan)
+
+
+def test_nonstationary_composite_simulation_retains_finite_recursion():
+    values,shocks,variances=simulate_ar1_garch11(1.05,.1,.2,.9,30,mu=.3,rng=92,
+        initial_value=.7,initial_variance=2.,burn_in=0)
+    assert values[0]==pytest.approx(.3+1.05*(.7-.3)+shocks[0])
+    np.testing.assert_allclose(values[1:],.3+1.05*(values[:-1]-.3)+shocks[1:])
+    np.testing.assert_allclose(variances[1:],.1+.2*shocks[:-1]**2+.9*variances[:-1])

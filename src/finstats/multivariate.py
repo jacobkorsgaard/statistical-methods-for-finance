@@ -122,10 +122,9 @@ def multivariate_skew_normal_rvs(location, scale, shape, size, random_state):
 def multivariate_skew_normal_mle(data):
     """Multi-start numerical fit; returns location, scale, shape and diagnostics.
 
-    Positive definite scale uses a Cholesky factor. For stable finite numerical
-    fits, shape entries are bounded to [-30, 30], and log Cholesky diagonals
-    to [-10, 10] in standardized coordinates. Starts reduce local-optimum risk
-    without guaranteeing a global solution. Bound hits are reported explicitly.
+    Positive definite scale uses a Cholesky factor. Shape entries and log
+    Cholesky diagonals are unbounded. Starts reduce local-optimum risk
+    without guaranteeing a global solution.
     """
     if np.iscomplexobj(data):
         raise ValueError("data must be real")
@@ -144,8 +143,10 @@ def multivariate_skew_normal_mle(data):
         raise ValueError("sample covariance must be positive definite")
     z = (x - center) / sd
     covariance = np.cov(z, rowvar=False, ddof=0)
-    if np.linalg.eigvalsh(covariance).min() <= 1e-12:
-        raise ValueError("sample covariance must be positive definite")
+    try:
+        np.linalg.cholesky(covariance)
+    except np.linalg.LinAlgError as error:
+        raise ValueError("sample covariance must be positive definite") from error
     k = x.shape[1]
     rows, cols = np.tril_indices(k)
     diag = rows == cols
@@ -157,15 +158,15 @@ def multivariate_skew_normal_mle(data):
         factor[rows, cols] = entries
         return p[:k], factor @ factor.T, p[-k:]
 
+    @np.errstate(over="ignore", invalid="ignore", divide="ignore")
     def objective(p):
         mu, matrix, alpha = unpack(p)
-        return -multivariate_skew_normal_logpdf(z, mu, matrix, alpha).sum()
+        try:
+            value = -multivariate_skew_normal_logpdf(z, mu, matrix, alpha).sum()
+        except (ValueError, np.linalg.LinAlgError):
+            return 1e100
+        return float(value) if np.isfinite(value) else 1e100
 
-    bounds = (
-        [(None, None)] * k
-        + [(-10, 10) if d else (None, None) for d in diag]
-        + [(-30, 30)] * k
-    )
     starts = [np.zeros(k)]
     for j in range(k):
         for sign in [-1, 1]:
@@ -189,7 +190,6 @@ def multivariate_skew_normal_mle(data):
             objective,
             initial,
             method="L-BFGS-B",
-            bounds=bounds,
             options={"maxiter": 1500, "ftol": 1e-11},
         )
         ll = -fit.fun - len(x) * np.log(sd).sum()
@@ -201,7 +201,7 @@ def multivariate_skew_normal_mle(data):
                 "message": str(fit.message),
             }
         )
-        if fit.success and np.isfinite(ll):
+        if fit.success and np.isfinite(ll) and fit.fun < 1e100:
             candidates.append((ll, fit.x))
     if not candidates:
         raise RuntimeError("all skew-normal optimization starts failed")
@@ -213,5 +213,4 @@ def multivariate_skew_normal_mle(data):
         "shape": alpha,
         "log_likelihood": float(ll),
         "starts": diagnostics,
-        "shape_bound_hit": bool(np.any(np.abs(alpha) >= 29.99)),
     }

@@ -31,7 +31,7 @@ def test_invalid_samples(x):
         multivariate_t_mle(x)
 
 
-@pytest.mark.parametrize('starts', [[], [1], [201], [np.nan], [[4]]])
+@pytest.mark.parametrize('starts', [[], [0], [-1], [np.nan], [[4]]])
 def test_invalid_starts(starts):
     with pytest.raises(ValueError):
         multivariate_t_mle([[0,1],[1,0],[2,3],[3,1]], starts)
@@ -45,3 +45,12 @@ def test_all_failed_starts_raise(monkeypatch):
                                         success=False, message='failed'))
     with pytest.raises(RuntimeError, match='all multivariate'):
         multivariate_t_mle([[0,1],[1,0],[2,3],[3,1]])
+
+
+def test_student_t_fit_allows_infinite_covariance():
+    x=stats.multivariate_t.rvs(shape=[[1.,.2],[.2,.7]],df=1.3,size=1200,
+                             random_state=np.random.default_rng(609))
+    fit=multivariate_t_mle(x,df_starts=(1.,4.))
+    assert 0<fit["df"]<2
+    assert fit["log_likelihood"]==pytest.approx(stats.multivariate_t.logpdf(
+        x,loc=fit["location"],shape=fit["scale"],df=fit["df"]).sum())

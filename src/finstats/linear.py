@@ -49,8 +49,8 @@ def is_stationary_ar(phi_coefficients: ArrayLike) -> bool:
 
 
 def ar1_forecast(last_value: float, phi: float, mu: float, horizon: int) -> NDArray:
-    """Mean forecasts for horizons 1..horizon under known stationary AR(1)."""
-    phi = _stationary_phi(phi)
+    """Mean forecasts for horizons 1..horizon under known AR(1)."""
+    phi = _finite_scalar(phi, "phi")
     _positive_size(horizon)
     last_value = _finite_scalar(last_value, "last_value")
     mu = _finite_scalar(mu, "mu")

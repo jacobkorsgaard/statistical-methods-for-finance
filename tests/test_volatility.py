@@ -88,16 +88,18 @@ def test_standardization_and_squared_portmanteau():
 def test_invalid_stationary_parameters(omega, alpha, beta):
     with pytest.raises(ValueError):
         garch11_unconditional_variance(omega, alpha, beta)
-    with pytest.raises(ValueError):
-        simulate_garch11(omega, alpha, beta, 10)
+    if alpha+beta < 1 or not np.isfinite(alpha+beta):
+        with pytest.raises(ValueError):
+            simulate_garch11(omega, alpha, beta, 10)
 
 
 @pytest.mark.parametrize("omega,alpha", [(0, 0.2), (1, -0.1), (1, 1), (1, np.nan)])
 def test_invalid_arch_parameters(omega, alpha):
     with pytest.raises(ValueError):
         arch1_unconditional_variance(omega, alpha)
-    with pytest.raises(ValueError):
-        simulate_arch1(omega, alpha, 10)
+    if alpha < 1 or not np.isfinite(alpha):
+        with pytest.raises(ValueError):
+            simulate_arch1(omega, alpha, 10)
 
 
 @pytest.mark.parametrize("bad", [0, -1, 1.5, True])
@@ -149,3 +151,11 @@ def test_student_innovations_are_standardized_and_aligned():
 def test_student_simulation_requires_finite_variance(df):
     with pytest.raises(ValueError):
         simulate_garch11(1, 0, 0, 10, df=df)
+
+
+@pytest.mark.parametrize("beta", [.8,.9])
+def test_simulation_with_unit_or_above_unit_persistence(beta):
+    a,h=simulate_garch11(.1,.2,beta,30,rng=91,initial_variance=2.,burn_in=0)
+    assert h[0]==2.
+    np.testing.assert_allclose(h[1:],.1+.2*a[:-1]**2+beta*h[:-1])
+    assert np.isfinite(h).all()

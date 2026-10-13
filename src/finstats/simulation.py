@@ -3,26 +3,29 @@
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 from ._validation import _sample, _integer, _finite_scalar, _positive_size
-from .linear import _stationary_phi, _coefficients, ar1_unconditional_variance
+from .linear import _coefficients, ar1_unconditional_variance
 from .volatility import _parameters, garch11_unconditional_variance
 
 
 def simulate_ar1(
-    phi: float, sigma: float, n: int, mu: float = 0.0, rng=None
+    phi: float, sigma: float, n: int, mu: float = 0.0, rng=None, *, initial_value=None
 ) -> NDArray:
-    """n Gaussian AR(1) observations, initialized from the exact stationary law.
+    """n Gaussian AR(1) observations with an optional finite initial value.
 
     sigma is innovation SD, not process SD. Supply a Generator for reproducibility.
-    No truncated burn-in approximation is needed for this Gaussian model.
+    For |phi|<1 the default initial value follows the stationary law; otherwise
+    it is mu. An explicit initial_value supports any finite phi.
     """
-    phi = _stationary_phi(phi)
+    phi = _finite_scalar(phi, "phi")
     _positive_size(n)
     mu = _finite_scalar(mu, "mu")
-    variance = ar1_unconditional_variance(phi, _finite_scalar(sigma, "sigma") ** 2)
+    sigma = _finite_scalar(sigma, "sigma")
     if sigma <= 0:
         raise ValueError("sigma must be positive")
     rng = np.random.default_rng(rng)
-    previous = rng.normal(mu, np.sqrt(variance))
+    previous = (_finite_scalar(initial_value, "initial_value") if initial_value is not None else
+                rng.normal(mu, np.sqrt(ar1_unconditional_variance(phi, sigma**2)))
+                if abs(phi)<1 else mu)
     innovations = rng.normal(0, sigma, size=n)
     values = np.empty(n)
     for t in range(n):
@@ -73,19 +76,23 @@ def simulate_garch11(
     rng=None,
     *,
     df: float | None = None,
+    initial_variance: float | None = None,
+    burn_in: int = 1000,
 ) -> tuple[NDArray, NDArray]:
-    """GARCH(1,1), with population-variance initialization and 1,000 burn-in steps.
+    """GARCH(1,1) with optional finite initialization and burn-in.
 
     Innovations are Gaussian by default. Optional df>2 selects Student-t
     innovations scaled by sqrt((df-2)/df) to have unit variance.
 
-    Burn-in approximates stationary initialization; it is not an exact draw from
-    the stationary joint law. Higher moment existence is not assumed.
+    Below unit persistence the default initial variance is the population variance;
+    otherwise it is omega. Burn-in does not guarantee stationary initialization.
+    Use burn_in=0 to retain the entire explicitly initialized finite path.
     """
-    omega, alpha, beta = _parameters(omega, alpha, beta, stationary=True)
+    omega, alpha, beta = _parameters(omega, alpha, beta)
     _positive_size(n)
     rng = np.random.default_rng(rng)
-    total = n + 1000
+    _integer(burn_in, "burn_in")
+    total = n + burn_in
     if df is None:
         innovations = rng.normal(size=total)
     else:
@@ -95,19 +102,23 @@ def simulate_garch11(
         innovations = rng.standard_t(df, size=total) * np.sqrt((df - 2) / df)
     h = np.empty(total)
     a = np.empty(total)
-    h[0] = garch11_unconditional_variance(omega, alpha, beta)
+    h[0] = (_finite_scalar(initial_variance, "initial_variance") if initial_variance is not None
+            else garch11_unconditional_variance(omega, alpha, beta) if alpha+beta<1 else omega)
+    if h[0] <= 0:
+        raise ValueError("initial_variance must be positive")
     a[0] = np.sqrt(h[0]) * innovations[0]
     for t in range(1, total):
         h[t] = omega + alpha * a[t - 1] ** 2 + beta * h[t - 1]
         a[t] = np.sqrt(h[t]) * innovations[t]
-    return a[1000:], h[1000:]
+    return a[burn_in:], h[burn_in:]
 
 
 def simulate_arch1(
-    omega: float, alpha: float, n: int, rng=None
+    omega: float, alpha: float, n: int, rng=None, *, initial_variance=None, burn_in=1000
 ) -> tuple[NDArray, NDArray]:
     """Gaussian ARCH(1) as the beta=0 variance recursion; see simulate_garch11."""
-    return simulate_garch11(omega, alpha, 0.0, n, rng)
+    return simulate_garch11(omega, alpha, 0.0, n, rng,
+                            initial_variance=initial_variance, burn_in=burn_in)
 
 
 def simulate_ar1_garch11(
@@ -120,26 +131,30 @@ def simulate_ar1_garch11(
     rng=None,
     *,
     df: float | None = None,
+    initial_value: float | None = None,
+    initial_variance: float | None = None,
+    burn_in: int = 1000,
 ) -> tuple[NDArray, NDArray, NDArray]:
     """Return aligned (observations, innovations, conditional variances).
 
     X_t = mu + phi*(X_(t-1)-mu) + a_t, with Gaussian (default) or unit-variance Student-t (df>2) standardized
-    GARCH(1,1) shocks. mu is the unconditional mean, not the recursion
-    intercept. Require |phi|<1 and alpha+beta<1 for finite stationary
-    second moments. Output variance belongs to a_t conditional on the past,
+    GARCH(1,1) shocks. mu is the equilibrium location, not the recursion
+    intercept. Unit/above-unit persistence and nonstationary AR coefficients
+    are permitted with finite initial states. Output variance belongs to a_t conditional on the past,
     rather than to the unconditional X_t distribution.
 
-    Reuse the GARCH simulator's 1,000-step variance burn-in, then discard
-    1,000 further observations while initializing the mean at mu. This
-    approximates stationary initialization, rather than drawing its exact law.
+    By default discard 1,000 variance steps and 1,000 mean steps. Set
+    burn_in=0 for a path starting at the supplied initial states.
     """
-    phi = _stationary_phi(phi)
+    phi = _finite_scalar(phi, "phi")
     _positive_size(n)
     mu = _finite_scalar(mu, "mu")
-    burn = 1000
-    shocks, variances = simulate_garch11(omega, alpha, beta, n + burn, rng=rng, df=df)
+    _integer(burn_in, "burn_in")
+    burn = burn_in
+    shocks, variances = simulate_garch11(omega, alpha, beta, n + burn, rng=rng, df=df,
+                                           initial_variance=initial_variance, burn_in=burn_in)
     observations = np.empty(n + burn)
-    previous = mu
+    previous = mu if initial_value is None else _finite_scalar(initial_value, "initial_value")
     for t, shock in enumerate(shocks):
         previous = mu + phi * (previous - mu) + shock
         observations[t] = previous

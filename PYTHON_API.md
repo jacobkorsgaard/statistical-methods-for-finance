@@ -43,10 +43,10 @@ Import `from scipy import stats`. SciPy distributions provide `pdf`, `logpdf`, `
 | Gaussian | `stats.norm(loc=mu,scale=sigma)` | sigma is SD |
 | Student-t | `stats.t(df=nu,loc=mu,scale=s)` | SD=`s*sqrt(nu/(nu-2))` for nu>2 |
 | Laplace | `stats.laplace(loc=mu,scale=b)` | SD=`sqrt(2)*b` |
-| Lognormal | `stats.lognorm(s=sigma,loc=0,scale=np.exp(mu))` | Parameters describe log(X); X>0 |
+| Lognormal | `stats.lognorm(s=sigma,loc=shift,scale=np.exp(mu))` | Parameters describe log(X−shift); X>shift |
 | Skew-normal | `stats.skewnorm(a=alpha,loc=xi,scale=omega)` | xi is location, not generally the mean |
 
-[`fit_distribution(data,distribution)`](src/finstats/fitting.py) fits these families through SciPy. It accepts generators or `"norm"`, `"t"`, `"laplace"`, `"lognorm"`, `"skewnorm"`, returning `params`, a fitted `distribution`, `log_likelihood`, `aic`, `bic`. Lognormal fitting fixes `loc=0`; numerical fits can reach local optima.
+[`fit_distribution(data,distribution)`](src/finstats/fitting.py) fits these families through SciPy. It accepts generators or `"norm"`, `"t"`, `"laplace"`, `"lognorm"`, `"skewnorm"`, returning `params`, a fitted `distribution`, `log_likelihood`, `aic`, `bic`. Lognormal fitting estimates the shift `loc` as well as log-scale parameters; numerical fits can reach local optima.
 
 ```python
 import numpy as np
@@ -63,7 +63,7 @@ fitted_risk = (student_t_var(-p["mu"], p["scale"], p["df"]),
                student_t_es(-p["mu"], p["scale"], p["df"]))
 ```
 
-Parameter labels: `mu,sigma` for Gaussian/lognormal; `mu,scale` for Laplace; `mu,scale,df` for t; `mu,scale,alpha` for skew-normal. Compare AIC/BIC on the same observations and likelihood basis.
+Parameter labels: `mu,sigma` for Gaussian and `mu,sigma,loc` for shifted lognormal; `mu,scale` for Laplace; `mu,scale,df` for t; `mu,scale,alpha` for skew-normal. Compare AIC/BIC on the same observations and likelihood basis.
 
 ### Multivariate models
 
@@ -74,11 +74,11 @@ Parameter labels: `mu,sigma` for Gaussian/lognormal; `mu,scale` for Laplace; `mu
 | Symmetric bivariate Laplace | `bivariate_symmetric_laplace_pdf(x,location,covariance)`; no joint estimator |
 | Skew-normal | `multivariate_skew_normal_logpdf`, `_moments`, `_rvs`, `_mle` (full names share the prefix) |
 
-[`multivariate_t_mle`](src/finstats/multivariate_fit.py) returns location, scale, df, likelihood and optimizer-start diagnostics. It needs nonsingular samples with n>k≥2 and constrains df to [2.01,200]. Actual covariance is `scale*df/(df-2)`.
+[`multivariate_t_mle`](src/finstats/multivariate_fit.py) returns location, scale, df, likelihood and optimizer-start diagnostics. It needs nonsingular samples with n>k≥2 and estimates any positive df. Actual covariance is `scale*df/(df-2)` only for df>2; there is no numerical upper cap.
 
-[`finstats.multivariate`](src/finstats/multivariate.py) documents the Laplace/skew-normal interfaces. Laplace's matrix is actual covariance; its Gaussian–exponential mixture has an integrable infinite density at the center. Skew-normal scale describes the Gaussian kernel; use its moments function for actual mean/covariance and inspect MLE start/boundary diagnostics.
+[`finstats.multivariate`](src/finstats/multivariate.py) documents the Laplace/skew-normal interfaces. Laplace's matrix is actual covariance; its Gaussian–exponential mixture has an integrable infinite density at the center. Skew-normal scale describes the Gaussian kernel; use its moments function for actual mean/covariance and inspect MLE convergence diagnostics.
 
-Joint-model marginals need not match separate univariate fits. Multivariate lognormal has no custom API; it can be constructed by exponentiating Gaussian samples. Lognormal is unsuitable for signed returns.
+Joint-model marginals need not match separate univariate fits. Multivariate lognormal has no custom API; it can be constructed by exponentiating Gaussian samples. An unshifted lognormal requires positive values; shifted lognormal fitting estimates the lower support endpoint.
 
 ## Empirical methods
 
@@ -95,14 +95,14 @@ See [`finstats.empirical`](src/finstats/empirical.py). Pass a fitted distributio
 
 | Task | Interface |
 | --- | --- |
-| AR, MA, ARMA, ARIMA | `statsmodels.tsa.arima.model.ARIMA(x,order=(p,d,q)).fit()` |
-| Automatic candidate search | `pmdarima.auto_arima(x,seasonal=False,information_criterion="bic")` |
+| AR, MA, ARMA, ARIMA | `statsmodels.tsa.arima.model.ARIMA(x,order=(p,d,q),enforce_stationarity=False,enforce_invertibility=False).fit()` |
+| Automatic candidate search | Exhaustive grid of ARIMA fits with common likelihood initialization; rank converged candidates by BIC |
 | Mean forecasts / differencing | Fitted `.get_forecast(steps=h)` / `np.diff(x,n=d)` |
 | Stationarity / identification | statsmodels `adfuller`, `kpss`, `acf`, `pacf` |
-| ARCH/GARCH | `arch.arch_model(...).fit()` |
+| ARCH/GARCH | `finstats.arch_models.arch_model(...).fit()` |
 | ARCH LM test | `statsmodels.stats.diagnostic.het_arch` |
 
-AR, MA and ARMA use orders `(p,0,0)`, `(0,0,q)` and `(p,0,q)`. Notebook differencing order i is library d. Set trends explicitly; automatic searches complement residual diagnostics.
+AR, MA and ARMA use orders `(p,0,0)`, `(0,0,q)` and `(p,0,q)`. Notebook differencing order i is library d. Set trends explicitly and disable stationarity/invertibility enforcement in ARIMA. Notebook 11 uses a direct grid because auto_arima also rejects near-unit roots independently of those flags. Automatic searches complement residual diagnostics.
 
 **GARCH ordering:** Notebooks/custom joint models use `(variance lags,squared-innovation lags)`. arch uses p for squared-innovation lags and q for variance lags. Swap asymmetric orders. Its `conditional_volatility` is SD; forecast `residual_variance` is innovation variance.
 
@@ -134,7 +134,7 @@ future_means, future_innovation_variances, paths = joint_fit.forecast(
 rolling = expanding_arma_garch_forecasts(a, joint_fit, n_starts=2)
 ```
 
-[`fit_arma_garch`](src/finstats/joint.py) takes observations, starting AR/MA vectors and starting mean; vector lengths determine orders. Options include `distribution`, `garch_order`, `hold_back`, `n_starts`, `seed`, `start_fit`, `compute_inference`. Results expose parameters, likelihood, AIC/BIC, starts and inference diagnostics. Inspect convergence and boundaries; multiple starts do not guarantee a global optimum. Multi-step innovation variance differs from total return forecast-error variance. Simulated paths exclude parameter-estimation uncertainty.
+[`fit_arma_garch`](src/finstats/joint.py) takes observations, starting AR/MA vectors and starting mean; vector lengths determine orders. Options include `distribution`, `garch_order`, `hold_back`, `n_starts`, `seed`, `start_fit`, `compute_inference`. Results expose parameters, likelihood, AIC/BIC, starts and inference diagnostics. AR/MA coefficients and volatility persistence are unrestricted; positive variance parameters and unit-variance Student-t df>2 define the model domain. Inspect convergence; multiple starts do not guarantee a global optimum. Multi-step innovation variance differs from total return forecast-error variance. Simulated paths exclude parameter-estimation uncertainty.
 
 [`expanding_arma_garch_forecasts`](src/finstats/rolling.py) requires the initial fit to match the training prefix, then refits before every target. It returns mean, variance, df, 5% VaR/ES and estimation diagnostics. Optional `cache_path` stores validated checkpoints; `progress(done,total)` reports progress. Changed inputs/settings/estimator source invalidate cached records.
 
