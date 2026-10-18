@@ -3,41 +3,6 @@ import numpy as np
 import pytest
 from statsmodels.stats.diagnostic import acorr_ljungbox
 from finstats.diagnostics import mcleod_li, standardized_residuals
-from finstats.volatility import (
-    arch1_unconditional_variance,
-    garch11_unconditional_variance,
-    garch11_variance_path,
-    garch11_forecast,
-)
-
-
-def test_population_variances():
-    assert arch1_unconditional_variance(2, 0.8) == pytest.approx(10)
-    assert garch11_unconditional_variance(1, 0.2, 0.5) == pytest.approx(10 / 3)
-
-
-def test_variance_alignment_hand_recursion():
-    h = garch11_variance_path([2, 3, -1], 1, 0.2, 0.5, initial_variance=4)
-    np.testing.assert_allclose(h, [4, 3.8, 4.7])
-    np.testing.assert_allclose(
-        garch11_forecast(-1, 4.7, 1, 0.2, 0.5, 3), [3.55, 3.485, 3.4395]
-    )
-    assert garch11_variance_path([1], 1, 0.2, 0.5)[0] == pytest.approx(10 / 3)
-
-
-def test_igarch_finite_paths_have_no_stationary_variance():
-    with pytest.raises(ValueError):
-        garch11_unconditional_variance(1, 0.2, 0.8)
-    with pytest.raises(ValueError):
-        garch11_variance_path([1, 2], 1, 0.2, 0.8)
-    np.testing.assert_allclose(garch11_variance_path([1, 2], 1, 0.2, 0.8, 4), [4, 4.4])
-    np.testing.assert_allclose(garch11_forecast(1, 4, 1, 0.2, 0.8, 3), [4.4, 5.4, 6.4])
-
-
-def test_forecast_convergence():
-    values = garch11_forecast(10, 2, 1, 0.2, 0.5, 100)
-    assert values[-1] == pytest.approx(10 / 3)
-    assert values[0] > values[1] > values[-1]
 
 
 def test_simulation_reproducibility_and_recursion():
@@ -79,33 +44,23 @@ def test_standardization_and_squared_portmanteau():
         (-1, 0.1, 0.8),
         (1, -0.1, 0.8),
         (1, 0.1, -0.1),
-        (1, 0.5, 0.5),
-        (1, 0.2, 0.9),
         (np.nan, 0.1, 0.8),
         (1, np.inf, 0.8),
     ],
 )
-def test_invalid_stationary_parameters(omega, alpha, beta):
+def test_invalid_variance_parameters(omega, alpha, beta):
     with pytest.raises(ValueError):
-        garch11_unconditional_variance(omega, alpha, beta)
-    if alpha+beta < 1 or not np.isfinite(alpha+beta):
-        with pytest.raises(ValueError):
-            simulate_garch11(omega, alpha, beta, 10)
+        simulate_garch11(omega, alpha, beta, 10)
 
 
-@pytest.mark.parametrize("omega,alpha", [(0, 0.2), (1, -0.1), (1, 1), (1, np.nan)])
+@pytest.mark.parametrize("omega,alpha", [(0, 0.2), (1, -0.1), (1, np.nan)])
 def test_invalid_arch_parameters(omega, alpha):
     with pytest.raises(ValueError):
-        arch1_unconditional_variance(omega, alpha)
-    if alpha < 1 or not np.isfinite(alpha):
-        with pytest.raises(ValueError):
-            simulate_arch1(omega, alpha, 10)
+        simulate_arch1(omega, alpha, 10)
 
 
 @pytest.mark.parametrize("bad", [0, -1, 1.5, True])
-def test_invalid_forecast_horizons_and_lengths(bad):
-    with pytest.raises(ValueError):
-        garch11_forecast(1, 1, 1, 0.1, 0.8, bad)
+def test_invalid_simulation_lengths(bad):
     with pytest.raises(ValueError):
         simulate_garch11(1, 0.1, 0.8, bad)
 
@@ -122,20 +77,7 @@ def test_invalid_standardization(a, h):
 @pytest.mark.parametrize("initial", [0, -1, np.nan, np.inf])
 def test_invalid_initial_variance(initial):
     with pytest.raises(ValueError):
-        garch11_variance_path([1, 2], 1, 0.1, 0.8, initial)
-    with pytest.raises(ValueError):
-        garch11_forecast(1, initial, 1, 0.1, 0.8)
-
-
-def test_path_invalid_residuals_and_parameters():
-    for x in [[], [np.nan], [[1, 2]], [1j]]:
-        with pytest.raises(ValueError):
-            garch11_variance_path(x, 1, 0.1, 0.8)
-    for args in [(0, 0.1, 0.8), (1, -0.1, 0.8), (1, 0.1, -0.1)]:
-        with pytest.raises(ValueError):
-            garch11_forecast(1, 1, *args)
-        with pytest.raises(ValueError):
-            garch11_variance_path([1], *args, initial_variance=1)
+        simulate_garch11(1, 0.1, 0.8, 2, initial_variance=initial)
 
 
 def test_student_innovations_are_standardized_and_aligned():

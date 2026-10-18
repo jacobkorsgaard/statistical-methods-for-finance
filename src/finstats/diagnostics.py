@@ -4,7 +4,7 @@ from __future__ import annotations
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 from ._validation import _sample, _integer
-from statsmodels.tsa.stattools import acf as _reference_acf
+from statsmodels.tsa.stattools import acf as _reference_acf, acovf
 from statsmodels.stats.diagnostic import acorr_ljungbox
 
 
@@ -17,17 +17,12 @@ def sample_autocovariance(x: ArrayLike, lag: int, adjusted: bool = True) -> floa
     _integer(lag, "lag")
     if lag >= values.size:
         raise ValueError("lag must be smaller than sample length")
-    centered = values - np.mean(values)
-    denominator = values.size - lag if adjusted else values.size
-    return float(np.dot(centered[lag:], centered[: values.size - lag]) / denominator)
+    return float(acovf(values, adjusted=adjusted, demean=True, fft=False, nlag=lag)[lag])
 
 
 def sample_autocorrelation(x: ArrayLike, lag: int, adjusted: bool = True) -> float:
     """Return sample lag covariance / lag-zero covariance; reject constants."""
-    variance = sample_autocovariance(x, 0)
-    if variance == 0:
-        raise ValueError("autocorrelation requires a nonconstant series")
-    return sample_autocovariance(x, lag, adjusted=adjusted) / variance
+    return float(acf(x, lag, adjusted=adjusted)[lag])
 
 
 def acf(x: ArrayLike, max_lag: int, adjusted: bool = True) -> NDArray[np.float64]:

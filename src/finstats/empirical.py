@@ -5,6 +5,7 @@ from collections.abc import Callable
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 from scipy import stats
+from statsmodels.distributions.empirical_distribution import ECDF
 from ._validation import _sample
 
 
@@ -14,7 +15,7 @@ def empirical_cdf(x: ArrayLike) -> Callable[[ArrayLike], NDArray[np.float64]]:
     Sorting once makes repeated evaluation efficient. Scalar evaluation returns
     a zero-dimensional array. NaN/complex evaluation points are rejected.
     """
-    ordered = np.sort(_sample(x)).copy()
+    reference = ECDF(_sample(x), side="right")
 
     def evaluate(points: ArrayLike) -> NDArray[np.float64]:
         if np.iscomplexobj(points):
@@ -22,7 +23,7 @@ def empirical_cdf(x: ArrayLike) -> Callable[[ArrayLike], NDArray[np.float64]]:
         points = np.asarray(points, dtype=float)
         if np.any(np.isnan(points)):
             raise ValueError("evaluation points must not contain NaN")
-        return np.asarray(np.searchsorted(ordered, points, side="right") / ordered.size)
+        return np.asarray(reference(points))
 
     return evaluate
 

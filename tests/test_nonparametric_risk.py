@@ -105,3 +105,12 @@ def test_ecdf_monte_carlo_moments():
     estimates=np.array([float(empirical_cdf(x)(0)) for x in samples])
     assert abs(estimates.mean()-.5)<.004
     assert abs(estimates.var()-.25/100)<.0002
+
+
+def test_qq_ties_keep_distinct_order_statistic_positions():
+    sample = np.repeat([-2., 0., 1.], [8, 20, 12])
+    theoretical, observed = qq_data(sample, stats.t(5, loc=2, scale=3))
+    positions = (np.arange(1, len(sample) + 1) - .5) / len(sample)
+    np.testing.assert_array_equal(theoretical, stats.t(5, loc=2, scale=3).ppf(positions))
+    np.testing.assert_array_equal(observed, sample)
+    assert np.all(np.diff(theoretical) > 0)

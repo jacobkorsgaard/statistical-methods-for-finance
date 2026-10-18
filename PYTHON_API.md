@@ -15,8 +15,10 @@ Install following the [README](README.md). The three examples below can be run i
 | Distributional financial risk | `finstats.risk` | [05](notebooks/05_case_study_financial_distribution.ipynb) |
 | Processes and stationarity | Simulations, statsmodels tests | [06](notebooks/06_stochastic_processes.ipynb), [07](notebooks/07_stationarity_and_nonstationarity.ipynb) |
 | Linear time-series models | statsmodels, pmdarima | [08](notebooks/08_linear_time_series_models.ipynb) |
-| Conditional volatility | arch, `finstats.volatility` | [09](notebooks/09_conditional_volatility_models.ipynb) |
+| Conditional volatility | arch; explicit notebook recursions | [09](notebooks/09_conditional_volatility_models.ipynb) |
 | Combined models and rolling forecasts | `finstats.joint`, `finstats.rolling` | [10](notebooks/10_joint_mean_volatility_models.ipynb), [11](notebooks/11_case_study_financial_time_series.ipynb) |
+| Multivariate time-series models | statsmodels `VAR` | [12](notebooks/12_multivariate_time_series_var.ipynb) |
+| Cointegration and error correction | statsmodels `coint`, `select_coint_rank`, `VECM` | [13](notebooks/13_cointegration_and_error_correction.ipynb) |
 
 **Conventions:** Keep units consistent: decimal −0.02 means −2%; applications use percentage points. Simple-return losses are `-returns`. Sample variance uses `ddof=1`, Gaussian MLE variance `ddof=0`. Notebook skewness/kurtosis use `bias=True`, with `fisher=False` for raw kurtosis. Multivariate samples have observations in rows, `(n,k)`.
 
@@ -89,7 +91,7 @@ Joint-model marginals need not match separate univariate fits. Multivariate logn
 | `qq_data(x,distribution)` | Theoretical/ordered sample quantiles at `(i-.5)/n` |
 | `stats.gaussian_kde(x)` | Smoothed density; default Scott bandwidth |
 
-See [`finstats.empirical`](src/finstats/empirical.py). Pass a fitted distribution for QQ comparisons. NumPy's default quantiles and SciPy `probplot` positions differ from these conventions.
+See [`finstats.empirical`](src/finstats/empirical.py). The ECDF delegates to statsmodels `ECDF(side="right")`; quantiles delegate to `np.quantile(method="inverted_cdf")`. The small QQ helper retains explicit plotting positions because `scipy.stats.probplot` uses different positions and rank-based position helpers can reorder ties. Pass a fitted distribution for QQ comparisons. NumPy's default quantiles and SciPy `probplot` positions differ from these conventions.
 
 ## Time-series models
 
@@ -106,18 +108,28 @@ AR, MA and ARMA use orders `(p,0,0)`, `(0,0,q)` and `(p,0,q)`. Notebook differen
 
 **GARCH ordering:** Notebooks/custom joint models use `(variance lags,squared-innovation lags)`. arch uses p for squared-innovation lags and q for variance lags. Swap asymmetric orders. Its `conditional_volatility` is SD; forecast `residual_variance` is innovation variance.
 
+### VAR and cointegration
+
+`statsmodels.tsa.api.VAR` fits systems with observations in rows and variables in columns. Use `.select_order(maxlags, trend=...)` for a common-sample lag search, `.fit(p, trend=...)` for unrestricted OLS, and the fitted `.is_stable()`, `.test_whiteness()`, `.test_causality()` and `.ma_rep()` for diagnostics and innovation propagation. Stability is assessed after estimation. Cholesky orthogonalization adds an ordering-dependent identification assumption.
+
+`statsmodels.tsa.stattools.coint` supplies a residual-based cointegration test with a no-cointegration null; ordinary ADF p-values on fitted residuals are not interchangeable with this calibration. In `statsmodels.tsa.vector_ar.vecm`, `select_order` selects lagged differences, `select_coint_rank` assesses rank, and `VECM(..., k_ar_diff=q, coint_rank=r, deterministic=...).fit()` estimates the specified system. The corresponding levels VAR order is `q+1`. Deterministic terms must be specified consistently across selection, testing and fitting; Notebook 13 uses no deterministic terms (`det_order=-1` for rank testing, `deterministic="n"` for VECM).
+
+VAR `.forecast_interval()` and VECM `.predict(..., alpha=.05)` provide marginal Gaussian prediction intervals using estimated parameters. The notebooks verify recursive forecasts and finite-horizon covariance explicitly; these bands omit parameter-estimation and model-selection uncertainty.
+
 ### Custom helpers
 
 | Module | Functions / purpose |
 | --- | --- |
 | [simulation](src/finstats/simulation.py) | `simulate_ar1`, `simulate_ma`, `simulate_random_walk`, `simulate_arch1`, `simulate_garch11`, `simulate_ar1_garch11` |
-| [linear](src/finstats/linear.py) | AR(1) moments/forecasts and AR/MA roots, stationarity and invertibility checks |
-| [volatility](src/finstats/volatility.py) | ARCH/GARCH unconditional variance, GARCH(1,1) variance paths and forecasts |
 | [diagnostics](src/finstats/diagnostics.py) | Sample autocovariance/autocorrelation, `acf`, `ljung_box`, `mcleod_li`, `standardized_residuals` |
 
 Simulators accept seeds/generators via `rng`; volatility outputs are variances. Random walks include the initial level. Optional t innovations have unit variance and require df>2. Source docstrings specify initialization and return order.
 
-Custom ACF defaults to denominator n−lag; Ljung–Box uses denominator n and df=`lags-model_df`. McLeod–Li applies it to squared residuals with zero deduction and approximate calibration. Standardize residuals by **SD**, then inspect both residuals and their squares.
+Diagnostics delegate to statsmodels `acovf(..., demean=True, fft=False)`, `acf(..., fft=False)` and `acorr_ljungbox`, keeping input validation and diagnostic summaries. The ACF defaults to denominator n−lag; Ljung–Box uses denominator n and df=`lags-model_df`. McLeod–Li applies it to squared residuals with zero deduction and approximate calibration. Standardize residuals by **SD**, then inspect both residuals and their squares.
+
+Elementary `finstats.linear` and `finstats.volatility` modules have been removed. Notebook 08 uses NumPy polynomial roots and statsmodels `ArmaProcess.isstationary` / `.isinvertible`; Notebook 09 shows the known-parameter GARCH forecast recursion explicitly. Notebook 10 evaluates the AR(1) mean formula directly and calls the fitted arch forecast API for innovation variance. Population moment formulas remain in the notebook exposition; simulators evaluate their required initial variances locally.
+
+The arch adapter remains unchanged: it removes persistence ceilings, parameter caps and residual-based variance clipping to preserve the current estimation domain. These modifications are not required for ordinary stationary ARCH/GARCH estimation. They are required for the repository’s unrestricted estimation assumptions; replacing the adapter can change estimates and likelihoods. See the [constraint review](artifacts/statistical_simplification_review.md).
 
 ### Joint estimation and rolling forecasts
 

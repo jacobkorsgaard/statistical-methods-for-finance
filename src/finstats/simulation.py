@@ -2,9 +2,25 @@
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
-from ._validation import _sample, _integer, _finite_scalar, _positive_size
-from .linear import _coefficients, ar1_unconditional_variance
-from .volatility import _parameters, garch11_unconditional_variance
+from ._validation import _integer, _finite_scalar, _positive_size
+
+
+def _coefficients(coefficients: ArrayLike) -> NDArray:
+    if np.iscomplexobj(coefficients):
+        raise ValueError("coefficients must be real")
+    values = np.asarray(coefficients, dtype=float)
+    if values.ndim != 1 or not np.all(np.isfinite(values)):
+        raise ValueError("coefficients must be a finite one-dimensional vector")
+    return values
+
+
+def _parameters(omega, alpha, beta=0.0):
+    omega = _finite_scalar(omega, "omega")
+    alpha = _finite_scalar(alpha, "alpha")
+    beta = _finite_scalar(beta, "beta")
+    if omega <= 0 or alpha < 0 or beta < 0:
+        raise ValueError("omega must be positive; alpha and beta must be nonnegative")
+    return omega, alpha, beta
 
 
 def simulate_ar1(
@@ -24,7 +40,7 @@ def simulate_ar1(
         raise ValueError("sigma must be positive")
     rng = np.random.default_rng(rng)
     previous = (_finite_scalar(initial_value, "initial_value") if initial_value is not None else
-                rng.normal(mu, np.sqrt(ar1_unconditional_variance(phi, sigma**2)))
+                rng.normal(mu, np.sqrt(sigma**2 / (1 - phi**2)))
                 if abs(phi)<1 else mu)
     innovations = rng.normal(0, sigma, size=n)
     values = np.empty(n)
@@ -103,7 +119,7 @@ def simulate_garch11(
     h = np.empty(total)
     a = np.empty(total)
     h[0] = (_finite_scalar(initial_variance, "initial_variance") if initial_variance is not None
-            else garch11_unconditional_variance(omega, alpha, beta) if alpha+beta<1 else omega)
+            else omega / (1 - alpha - beta) if alpha+beta<1 else omega)
     if h[0] <= 0:
         raise ValueError("initial_variance must be positive")
     a[0] = np.sqrt(h[0]) * innovations[0]

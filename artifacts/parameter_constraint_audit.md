@@ -16,3 +16,5 @@ Removed on 2026-10-13 from the active library and notebook estimators:
 Retained mathematical domains: finite input values, positive scales and variances, positive definite density matrices, nonnegative ARCH/GARCH variance coefficients, positive Student-t df, df>2 for unit-variance innovations, and df>1 for finite Student-t ES. Stationary population variance/ACF functions still require the conditions under which their formulas exist; these do not restrict estimation.
 
 Historical archives are preserved. Active notebook outputs and notebook 11’s rolling cache are regenerated with the revised estimators.
+
+The subsequent [simplification constraint review](statistical_simplification_review.md#arch-constraint-review) documents numerical consequences against standard arch; it retains these constraints unchanged.

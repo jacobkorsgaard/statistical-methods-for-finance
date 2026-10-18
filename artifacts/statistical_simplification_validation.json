@@ -1,0 +1,288 @@
+{
+  "purpose": "Statistical implementation simplification; baseline is the working tree immediately before this refactor, including user edits.",
+  "historical_record": "artifacts/restructuring_validation.json records 12 executions and 595 objects at rtol=1e-10, atol=1e-12; it contains no individual numeric baselines and predates the constraint changes documented in parameter_constraint_audit.md.",
+  "numerical_tolerance": {
+    "rtol": 1e-10,
+    "atol": 1e-12
+  },
+  "numeric_capture": "Fresh isolated IPython processes, all numeric named scalars/arrays/tables and nested dictionaries after each code cell; repeated names are compared at each cell. Executed separately in actual fresh Jupyter kernels.",
+  "numeric_objects_compared": 5589,
+  "numeric_comparison": {
+    "00_financial_returns.ipynb.pickle": {
+      "compared": 13,
+      "missing": [],
+      "failed": [],
+      "roundoff_only": []
+    },
+    "01_univariate_distributions.ipynb.pickle": {
+      "compared": 100,
+      "missing": [],
+      "failed": [],
+      "roundoff_only": []
+    },
+    "02_multivariate_distributions.ipynb.pickle": {
+      "compared": 243,
+      "missing": [],
+      "failed": [],
+      "roundoff_only": []
+    },
+    "03_statistical_inference_and_mle.ipynb.pickle": {
+      "compared": 215,
+      "missing": [],
+      "failed": [],
+      "roundoff_only": []
+    },
+    "04_nonparametric_methods.ipynb.pickle": {
+      "compared": 130,
+      "missing": [],
+      "failed": [],
+      "roundoff_only": []
+    },
+    "05_case_study_financial_distribution.ipynb.pickle": {
+      "compared": 2799,
+      "missing": [],
+      "failed": [],
+      "roundoff_only": []
+    },
+    "06_stochastic_processes.ipynb.pickle": {
+      "compared": 10,
+      "missing": [],
+      "failed": [],
+      "roundoff_only": []
+    },
+    "07_stationarity_and_nonstationarity.ipynb.pickle": {
+      "compared": 21,
+      "missing": [],
+      "failed": [],
+      "roundoff_only": []
+    },
+    "08_linear_time_series_models.ipynb.pickle": {
+      "compared": 259,
+      "missing": [],
+      "failed": [],
+      "roundoff_only": []
+    },
+    "09_conditional_volatility_models.ipynb.pickle": {
+      "compared": 116,
+      "missing": [],
+      "failed": [],
+      "roundoff_only": []
+    },
+    "10_joint_mean_volatility_models.ipynb.pickle": {
+      "compared": 305,
+      "missing": [],
+      "failed": [],
+      "roundoff_only": [
+        "/21/innovation_forecast",
+        "/21/return_variance_forecast",
+        "/23/innovation_forecast",
+        "/23/return_variance_forecast",
+        "/25/innovation_forecast",
+        "/25/return_variance_forecast"
+      ]
+    },
+    "11_case_study_financial_time_series.ipynb.pickle": {
+      "compared": 805,
+      "missing": [],
+      "failed": [],
+      "roundoff_only": []
+    },
+    "12_multivariate_time_series_var.ipynb.pickle": {
+      "compared": 246,
+      "missing": [],
+      "failed": [],
+      "roundoff_only": []
+    },
+    "13_cointegration_and_error_correction.ipynb.pickle": {
+      "compared": 327,
+      "missing": [],
+      "failed": [],
+      "roundoff_only": []
+    }
+  },
+  "roundoff_max_absolute": {
+    "innovation_forecast": 3.3306690738754696e-16,
+    "return_variance_forecast": 8.881784197001252e-16
+  },
+  "fresh_kernel_execution": {
+    "00_financial_returns.ipynb": {
+      "executed": true
+    },
+    "01_univariate_distributions.ipynb": {
+      "executed": true
+    },
+    "02_multivariate_distributions.ipynb": {
+      "executed": true
+    },
+    "03_statistical_inference_and_mle.ipynb": {
+      "executed": true
+    },
+    "04_nonparametric_methods.ipynb": {
+      "executed": true
+    },
+    "05_case_study_financial_distribution.ipynb": {
+      "executed": true
+    },
+    "06_stochastic_processes.ipynb": {
+      "executed": true
+    },
+    "07_stationarity_and_nonstationarity.ipynb": {
+      "executed": true
+    },
+    "08_linear_time_series_models.ipynb": {
+      "executed": true
+    },
+    "09_conditional_volatility_models.ipynb": {
+      "executed": true
+    },
+    "10_joint_mean_volatility_models.ipynb": {
+      "executed": true
+    },
+    "11_case_study_financial_time_series.ipynb": {
+      "executed": true
+    },
+    "12_multivariate_time_series_var.ipynb": {
+      "executed": true
+    },
+    "13_cointegration_and_error_correction.ipynb": {
+      "executed": true
+    }
+  },
+  "preservation": {
+    "00_financial_returns.ipynb": {
+      "cells": 10,
+      "markdown_cells": 6,
+      "saved_outputs_and_metadata_unchanged": true
+    },
+    "01_univariate_distributions.ipynb": {
+      "cells": 23,
+      "markdown_cells": 16,
+      "saved_outputs_and_metadata_unchanged": true
+    },
+    "02_multivariate_distributions.ipynb": {
+      "cells": 25,
+      "markdown_cells": 16,
+      "saved_outputs_and_metadata_unchanged": true
+    },
+    "03_statistical_inference_and_mle.ipynb": {
+      "cells": 24,
+      "markdown_cells": 18,
+      "saved_outputs_and_metadata_unchanged": true
+    },
+    "04_nonparametric_methods.ipynb": {
+      "cells": 19,
+      "markdown_cells": 12,
+      "saved_outputs_and_metadata_unchanged": true
+    },
+    "05_case_study_financial_distribution.ipynb": {
+      "cells": 52,
+      "markdown_cells": 30,
+      "saved_outputs_and_metadata_unchanged": true
+    },
+    "06_stochastic_processes.ipynb": {
+      "cells": 9,
+      "markdown_cells": 6,
+      "saved_outputs_and_metadata_unchanged": true
+    },
+    "07_stationarity_and_nonstationarity.ipynb": {
+      "cells": 12,
+      "markdown_cells": 9,
+      "saved_outputs_and_metadata_unchanged": true
+    },
+    "08_linear_time_series_models.ipynb": {
+      "cells": 42,
+      "markdown_cells": 30,
+      "saved_outputs_and_metadata_unchanged": true
+    },
+    "09_conditional_volatility_models.ipynb": {
+      "cells": 21,
+      "markdown_cells": 13,
+      "saved_outputs_and_metadata_unchanged": true
+    },
+    "10_joint_mean_volatility_models.ipynb": {
+      "cells": 27,
+      "markdown_cells": 16,
+      "saved_outputs_and_metadata_unchanged": true
+    },
+    "11_case_study_financial_time_series.ipynb": {
+      "cells": 34,
+      "markdown_cells": 18,
+      "saved_outputs_and_metadata_unchanged": true
+    },
+    "12_multivariate_time_series_var.ipynb": {
+      "cells": 21,
+      "markdown_cells": 12,
+      "saved_outputs_and_metadata_unchanged": true
+    },
+    "13_cointegration_and_error_correction.ipynb": {
+      "cells": 21,
+      "markdown_cells": 12,
+      "saved_outputs_and_metadata_unchanged": true
+    }
+  },
+  "saved_output_comparison": {
+    "00_financial_returns.ipynb": {
+      "displayed_text_and_tables_match_saved_outputs": true
+    },
+    "01_univariate_distributions.ipynb": {
+      "displayed_text_and_tables_match_saved_outputs": true
+    },
+    "02_multivariate_distributions.ipynb": {
+      "displayed_text_and_tables_match_saved_outputs": true
+    },
+    "03_statistical_inference_and_mle.ipynb": {
+      "displayed_text_and_tables_match_saved_outputs": true
+    },
+    "04_nonparametric_methods.ipynb": {
+      "displayed_text_and_tables_match_saved_outputs": true
+    },
+    "05_case_study_financial_distribution.ipynb": {
+      "displayed_text_and_tables_match_saved_outputs": true
+    },
+    "06_stochastic_processes.ipynb": {
+      "displayed_text_and_tables_match_saved_outputs": true
+    },
+    "07_stationarity_and_nonstationarity.ipynb": {
+      "displayed_text_and_tables_match_saved_outputs": true
+    },
+    "08_linear_time_series_models.ipynb": {
+      "displayed_text_and_tables_match_saved_outputs": true
+    },
+    "09_conditional_volatility_models.ipynb": {
+      "displayed_text_and_tables_match_saved_outputs": true
+    },
+    "10_joint_mean_volatility_models.ipynb": {
+      "displayed_text_and_tables_match_saved_outputs": true
+    },
+    "11_case_study_financial_time_series.ipynb": {
+      "displayed_text_and_tables_match_saved_outputs": true
+    },
+    "12_multivariate_time_series_var.ipynb": {
+      "displayed_text_and_tables_match_saved_outputs": true
+    },
+    "13_cointegration_and_error_correction.ipynb": {
+      "displayed_text_and_tables_match_saved_outputs": true
+    }
+  },
+  "data_byte_identical": true,
+  "notebook11_artifacts_byte_identical": true,
+  "rolling_cache": "Existing validated cache reused; estimators and cache signature inputs unchanged. No claim of regenerating all 752 rolling fits.",
+  "tests": {
+    "before": 264,
+    "after": 259,
+    "warning": "Existing SciPy lognormal invalid-log RuntimeWarning"
+  },
+  "dependencies": "Unchanged",
+  "ecdf_roundoff_probe": {
+    "sample": "np.arange(n); evaluate at every observation",
+    "sample_sizes": [
+      3,
+      7,
+      17,
+      100,
+      1000
+    ],
+    "maximum_absolute_change": 1.1102230246251565e-16,
+    "reason": "statsmodels ECDF constructs probability levels with linspace; the previous implementation divided integer counts by n. Mathematical definition is unchanged."
+  }
+}

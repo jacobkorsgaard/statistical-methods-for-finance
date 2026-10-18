@@ -4,13 +4,15 @@
 
 This repository is an educational reference connecting statistical theory with financial applications in Python. It covers financial returns, probability distributions, statistical inference, nonparametric methods, stochastic processes, linear time-series models and conditional volatility. Mathematical explanations are accompanied by visualizations, reproducible simulations and empirical case studies.
 
-The sequence begins with returns as random variables and develops tools for describing expected returns, dispersion and downside risk through Value at Risk (VaR) and Expected Shortfall (ES). It then introduces temporal ordering, conditional expectations and changing volatility. Two case studies apply these ideas to equity and bond returns and to S&P 500 exposure, comparing model estimates with out-of-sample observations.
+The sequence begins with returns as random variables and develops tools for describing expected returns, dispersion and downside risk through Value at Risk (VaR) and Expected Shortfall (ES). It then introduces temporal ordering, conditional expectations and changing volatility. Two case studies apply these ideas to equity and bond returns and to S&P 500 exposure, comparing model estimates with out-of-sample observations. The final theory notebooks extend the sequence to multivariate dynamics, shared stochastic trends and error correction.
 
 The notebooks emphasize assumptions, interpretation and evaluation alongside implementation. Established scientific Python libraries provide standard methods; a focused collection of custom implementations supports selected statistical calculations and reusable analyses.
 
 ## Notebooks
 
 Read the notebooks in order for the complete progression, or consult individual topics as references.
+
+Notebooks 12 and 13 are still under development.
 
 | Notebook | Coverage |
 | --- | --- |
@@ -26,6 +28,8 @@ Read the notebooks in order for the complete progression, or consult individual 
 | [09 — Conditional Volatility Models](notebooks/09_conditional_volatility_models.ipynb) | ARCH/GARCH, diagnostics and conditional risk |
 | [10 — Joint Mean–Volatility Models](notebooks/10_joint_mean_volatility_models.ipynb) | Combined estimation, diagnostics and forecasting |
 | [11 — Financial Time-Series Case Study](notebooks/11_case_study_financial_time_series.ipynb) | S&P 500 models and expanding-window evaluation |
+| [12 — Multivariate Time-Series Models](notebooks/12_multivariate_time_series_var.ipynb) | VAR, stability, Granger predictability, impulse responses and forecasting |
+| [13 — Cointegration and Error Correction](notebooks/13_cointegration_and_error_correction.ipynb) | Stochastic trends, cointegration tests, rank, VECM and level forecasts |
 
 ## Getting Started
 
@@ -47,16 +51,16 @@ Empirical examples use fixed local snapshots and require no execution-time downl
 
 ## Python Implementations
 
-The `finstats` namespace contains focused reusable functionality, including custom multivariate estimators, joint ARMA–GARCH estimation, expanding-window forecasting, simulations and explicit empirical/risk conventions. Standard distribution, inference and time-series methods use NumPy, SciPy, statsmodels, pmdarima and arch.
+The `finstats` namespace contains focused reusable functionality, including custom multivariate estimators, joint ARMA–GARCH estimation, expanding-window forecasting, simulations and explicit empirical/risk conventions. Standard distribution, inference and time-series methods use NumPy, SciPy, statsmodels, pmdarima and arch. Elementary AR/MA and volatility formulas live in the notebooks, with direct library calls for roots, estimation and forecasts. Empirical and dependence helpers delegate standard calculations to NumPy/statsmodels while preserving the stated conventions.
 
-The [Python API guide](PYTHON_API.md) documents both custom interfaces and third-party methods, with examples, parameterizations and statistical conventions. The notebooks provide the accompanying mathematical exposition and applications.
+The [simplification review](artifacts/statistical_simplification_review.md) records removed APIs, numerical validation, the retained arch constraint overrides and the pending historical ES convention. The [Python API guide](PYTHON_API.md) documents both custom interfaces and third-party methods, with examples, parameterizations and statistical conventions. The notebooks provide the accompanying mathematical exposition and applications.
 
 ## Possible Extensions
 
 These directions extend the existing material:
 
 1. **Stochastic Processes and Trading Strategies:** Model-implied signals, mean reversion and volatility timing, assessed through out-of-sample evaluation.
-2. **VAR and Cointegration:** Multivariate time-series models, Granger causality, impulse responses and vector error-correction models (VECM).
+2. **Multivariate Financial Applications:** Empirical VAR and cointegration studies, with economically motivated variables and out-of-sample evaluation.
 3. **Extensions of GARCH:** Asymmetric GARCH models and, potentially, multivariate volatility models.
 4. **Bayesian Statistical Methods:** Bayesian estimation of univariate distributions, posterior predictive VaR/ES, Bayesian time-series models and state-space methods.
 
