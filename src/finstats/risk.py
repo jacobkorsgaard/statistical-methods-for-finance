@@ -1,7 +1,7 @@
 """Upper-tail loss measures; alpha is tail probability, not confidence level.
 
-Losses are L=-R. Historical ES uses STRICT exceedances of the inverse-ECDF
-quantile as specified in Notebook 05, unlike the legacy inclusive-tail API.
+Losses are L=-R. Historical ES integrates the inverse empirical CDF over the
+upper alpha tail, including fractional probability mass at its boundary.
 """
 from __future__ import annotations
 import numpy as np
@@ -33,17 +33,19 @@ def historical_var(losses: ArrayLike, alpha: float = .05) -> float:
 
 
 def historical_es(losses: ArrayLike, alpha: float = .05) -> float:
-    """Mean observed loss STRICTLY above VaR; reject an empty exceedance tail.
+    """Return alpha**-1 times the empirical quantile integral from 1-alpha to 1.
 
-    This course estimator is not fractional-mass empirical integrated ES and
-    need not average exactly alpha*n observations, particularly with ties.
+    For descending losses, average the largest floor(n*alpha) observations and
+    the fractional remainder of the next. Tied boundary losses contribute only
+    the mass required to fill the tail. If n*alpha<1, ES is the maximum loss.
     """
-    values = _sample(losses)
-    threshold = historical_var(values, alpha)
-    tail = values[values > threshold]
-    if tail.size == 0:
-        raise ValueError("no observed losses strictly exceed the VaR threshold")
-    return float(np.mean(tail))
+    ordered = np.sort(_sample(losses))[::-1]
+    tail_mass = ordered.size * _alpha(alpha)
+    whole = int(np.floor(tail_mass))
+    estimate = float(np.mean(ordered[:whole])) * (whole / tail_mass) if whole else 0.0
+    if whole < ordered.size:
+        estimate += float(ordered[whole]) * ((tail_mass - whole) / tail_mass)
+    return estimate
 
 
 def gaussian_var(mu: float, sigma: float, alpha: float = .05) -> float:

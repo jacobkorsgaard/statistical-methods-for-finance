@@ -1,0 +1,646 @@
+{
+  "estimator": "Integrated empirical quantile ES; alpha is upper loss-tail probability and L=-R. VaR estimator unchanged.",
+  "baseline_commit": "0811efb",
+  "tests": {
+    "passed": 272,
+    "warnings": [
+      "Existing SciPy lognormal invalid-log RuntimeWarning"
+    ]
+  },
+  "execution_and_saved_outputs": {
+    "04_nonparametric_methods.ipynb": {
+      "executed": true,
+      "regenerated_output_cells": [
+        13,
+        17
+      ],
+      "output_changes": [
+        {
+          "cell": 13,
+          "displayed_text_changed": true,
+          "figure_changed": false
+        },
+        {
+          "cell": 17,
+          "displayed_text_changed": true,
+          "figure_changed": true
+        }
+      ]
+    },
+    "05_case_study_financial_distribution.ipynb": {
+      "executed": true,
+      "regenerated_output_cells": [
+        11,
+        17,
+        26,
+        32,
+        44,
+        48,
+        50
+      ],
+      "output_changes": [
+        {
+          "cell": 11,
+          "displayed_text_changed": true,
+          "figure_changed": true
+        },
+        {
+          "cell": 17,
+          "displayed_text_changed": true,
+          "figure_changed": true
+        },
+        {
+          "cell": 26,
+          "displayed_text_changed": true,
+          "figure_changed": true
+        },
+        {
+          "cell": 32,
+          "displayed_text_changed": true,
+          "figure_changed": true
+        },
+        {
+          "cell": 44,
+          "displayed_text_changed": true,
+          "figure_changed": true
+        },
+        {
+          "cell": 48,
+          "displayed_text_changed": true,
+          "figure_changed": true
+        },
+        {
+          "cell": 50,
+          "displayed_text_changed": true,
+          "figure_changed": false
+        }
+      ]
+    },
+    "09_conditional_volatility_models.ipynb": {
+      "executed": true,
+      "regenerated_output_cells": [],
+      "output_changes": []
+    },
+    "11_case_study_financial_time_series.ipynb": {
+      "executed": true,
+      "regenerated_output_cells": [
+        32
+      ],
+      "output_changes": [
+        {
+          "cell": 32,
+          "displayed_text_changed": true,
+          "figure_changed": false
+        }
+      ]
+    }
+  },
+  "empirical_ES_percentage_points": [
+    {
+      "sample": "equity_train",
+      "n": 1509,
+      "alpha": 0.05,
+      "tail_mass": 75.45,
+      "VaR_unchanged": 1.961833174022043,
+      "old_ES": 3.151731012983989,
+      "new_ES": 3.144634206787397,
+      "change": -0.0070968061965919205
+    },
+    {
+      "sample": "equity_test",
+      "n": 752,
+      "alpha": 0.05,
+      "tail_mass": 37.6,
+      "VaR_unchanged": 1.416089772791107,
+      "old_ES": 2.129048721814467,
+      "new_ES": 2.1176717173087756,
+      "change": -0.011377004505691346
+    },
+    {
+      "sample": "bond_train",
+      "n": 1509,
+      "alpha": 0.05,
+      "tail_mass": 75.45,
+      "VaR_unchanged": 0.4464797625473138,
+      "old_ES": 0.7981327800659374,
+      "new_ES": 0.7960354459654286,
+      "change": -0.0020973341005087187
+    },
+    {
+      "sample": "bond_test",
+      "n": 752,
+      "alpha": 0.05,
+      "tail_mass": 37.6,
+      "VaR_unchanged": 0.5984949952364205,
+      "old_ES": 0.7927924988447264,
+      "new_ES": 0.7896920067658704,
+      "change": -0.0031004920788559875
+    }
+  ],
+  "ES_comparison_scores_percentage_points": [
+    {
+      "asset": "Equity",
+      "description": "Empirical",
+      "old_ES_difference_pp": 1.022682291169522,
+      "new_ES_difference_pp": 1.0269624894786213
+    },
+    {
+      "asset": "Equity",
+      "description": "Standalone univariate",
+      "old_ES_difference_pp": 1.0941497473827302,
+      "new_ES_difference_pp": 1.1055267518884215
+    },
+    {
+      "asset": "Equity",
+      "description": "Joint-model marginal",
+      "old_ES_difference_pp": 0.7837716689399241,
+      "new_ES_difference_pp": 0.7951486734456155
+    },
+    {
+      "asset": "Bond",
+      "description": "Empirical",
+      "old_ES_difference_pp": 0.005340281221210996,
+      "new_ES_difference_pp": 0.006343439199558265
+    },
+    {
+      "asset": "Bond",
+      "description": "Standalone univariate",
+      "old_ES_difference_pp": 0.054804992579003176,
+      "new_ES_difference_pp": 0.05170450050014719
+    },
+    {
+      "asset": "Bond",
+      "description": "Joint-model marginal",
+      "old_ES_difference_pp": 0.01202467824971809,
+      "new_ES_difference_pp": 0.008924186170862103
+    }
+  ],
+  "notebook04_tail_illustrations": [
+    {
+      "df": 2,
+      "n": 250,
+      "alpha": 0.005,
+      "old_ES": 40.89915657555372,
+      "new_ES": 37.3515476775591
+    },
+    {
+      "df": 20,
+      "n": 250,
+      "alpha": 0.005,
+      "old_ES": 10.50953451876715,
+      "new_ES": 10.485491330654089
+    },
+    {
+      "df": 2,
+      "n": 2500,
+      "alpha": 0.005,
+      "old_ES": 40.375312034522835,
+      "new_ES": 39.80127668036101
+    }
+  ],
+  "notebook04_replications": [
+    {
+      "n": 250,
+      "alpha": 0.01,
+      "old_ES_mean": 3.4651057217315318,
+      "new_ES_mean": 3.292570614701749,
+      "old_ES_SD": 0.9528575210281944,
+      "new_ES_SD": 0.824455785166583
+    },
+    {
+      "n": 2500,
+      "alpha": 0.01,
+      "old_ES_mean": 3.4468565840058307,
+      "new_ES_mean": 3.446856584005831,
+      "old_ES_SD": 0.27674744379168437,
+      "new_ES_SD": 0.2767474437916844
+    }
+  ],
+  "notebook11_empirical_severity_gap": {
+    "old": -0.12323091613594617,
+    "new": -0.11613410993935469
+  },
+  "numeric_differences": {
+    "04_nonparametric_methods.ipynb.pickle": {
+      "compared": 130,
+      "missing": [],
+      "added": [],
+      "differences": [
+        {
+          "entry": "/13/estimate_es",
+          "max_absolute_change": 0.5740353541618219
+        },
+        {
+          "entry": "/16/estimate_es",
+          "max_absolute_change": 0.5740353541618219
+        },
+        {
+          "entry": "/17/estimate_es",
+          "max_absolute_change": 0.5740353541618219
+        },
+        {
+          "entry": "/17/risk_replications/250",
+          "max_absolute_change": 1.342194362210389
+        }
+      ]
+    },
+    "05_case_study_financial_distribution.ipynb.pickle": {
+      "compared": 2799,
+      "missing": [],
+      "added": [],
+      "differences": [
+        {
+          "entry": "/11/comparison",
+          "max_absolute_change": 0.45000000000000284
+        },
+        {
+          "entry": "/14/comparison",
+          "max_absolute_change": 0.45000000000000284
+        },
+        {
+          "entry": "/17/comparison",
+          "max_absolute_change": 0.011377004505691346
+        },
+        {
+          "entry": "/17/empirical_test_risk/0.05/ES",
+          "max_absolute_change": 0.011377004505691346
+        },
+        {
+          "entry": "/17/reference/ES",
+          "max_absolute_change": 0.011377004505691346
+        },
+        {
+          "entry": "/17/values",
+          "max_absolute_change": 0.011377004505691346
+        },
+        {
+          "entry": "/20/comparison",
+          "max_absolute_change": 0.011377004505691346
+        },
+        {
+          "entry": "/20/empirical_test_risk/0.05/ES",
+          "max_absolute_change": 0.011377004505691346
+        },
+        {
+          "entry": "/20/reference/ES",
+          "max_absolute_change": 0.011377004505691346
+        },
+        {
+          "entry": "/20/values",
+          "max_absolute_change": 0.011377004505691346
+        },
+        {
+          "entry": "/22/comparison",
+          "max_absolute_change": 0.011377004505691346
+        },
+        {
+          "entry": "/22/empirical_test_risk/0.05/ES",
+          "max_absolute_change": 0.011377004505691346
+        },
+        {
+          "entry": "/22/reference/ES",
+          "max_absolute_change": 0.011377004505691346
+        },
+        {
+          "entry": "/22/values",
+          "max_absolute_change": 0.011377004505691346
+        },
+        {
+          "entry": "/24/comparison",
+          "max_absolute_change": 0.011377004505691346
+        },
+        {
+          "entry": "/24/empirical_test_risk/0.05/ES",
+          "max_absolute_change": 0.011377004505691346
+        },
+        {
+          "entry": "/24/reference/ES",
+          "max_absolute_change": 0.011377004505691346
+        },
+        {
+          "entry": "/24/values",
+          "max_absolute_change": 0.011377004505691346
+        },
+        {
+          "entry": "/26/comparison",
+          "max_absolute_change": 0.45000000000000284
+        },
+        {
+          "entry": "/26/tail_right",
+          "max_absolute_change": 0.0026216676256358706
+        },
+        {
+          "entry": "/26/tail_pdf",
+          "max_absolute_change": 0.0005928182890520273
+        },
+        {
+          "entry": "/26/empirical_test_risk/0.05/ES",
+          "max_absolute_change": 0.011377004505691346
+        },
+        {
+          "entry": "/26/reference/ES",
+          "max_absolute_change": 0.011377004505691346
+        },
+        {
+          "entry": "/26/values",
+          "max_absolute_change": 0.011377004505691346
+        },
+        {
+          "entry": "/29/comparison",
+          "max_absolute_change": 0.45000000000000284
+        },
+        {
+          "entry": "/29/tail_right",
+          "max_absolute_change": 0.0026216676256358706
+        },
+        {
+          "entry": "/29/tail_pdf",
+          "max_absolute_change": 0.0005928182890520273
+        },
+        {
+          "entry": "/29/empirical_test_risk/0.05/ES",
+          "max_absolute_change": 0.011377004505691346
+        },
+        {
+          "entry": "/29/reference/ES",
+          "max_absolute_change": 0.011377004505691346
+        },
+        {
+          "entry": "/29/values",
+          "max_absolute_change": 0.011377004505691346
+        },
+        {
+          "entry": "/32/grid",
+          "max_absolute_change": 0.0029362677407123172
+        },
+        {
+          "entry": "/32/comparison",
+          "max_absolute_change": 0.0031004920788559875
+        },
+        {
+          "entry": "/32/tail_right",
+          "max_absolute_change": 0.0029362677407123172
+        },
+        {
+          "entry": "/32/tail_pdf",
+          "max_absolute_change": 0.0005928182890520273
+        },
+        {
+          "entry": "/32/empirical_test_risk/0.05/ES",
+          "max_absolute_change": 0.0031004920788559875
+        },
+        {
+          "entry": "/32/reference/ES",
+          "max_absolute_change": 0.0031004920788559875
+        },
+        {
+          "entry": "/32/values",
+          "max_absolute_change": 0.0031004920788559875
+        },
+        {
+          "entry": "/36/grid",
+          "max_absolute_change": 0.0029362677407123172
+        },
+        {
+          "entry": "/36/comparison",
+          "max_absolute_change": 0.0031004920788559875
+        },
+        {
+          "entry": "/36/tail_right",
+          "max_absolute_change": 0.0029362677407123172
+        },
+        {
+          "entry": "/36/tail_pdf",
+          "max_absolute_change": 0.0005928182890520273
+        },
+        {
+          "entry": "/36/empirical_test_risk/0.05/ES",
+          "max_absolute_change": 0.0031004920788559875
+        },
+        {
+          "entry": "/36/reference/ES",
+          "max_absolute_change": 0.0031004920788559875
+        },
+        {
+          "entry": "/38/grid",
+          "max_absolute_change": 0.0029362677407123172
+        },
+        {
+          "entry": "/38/comparison",
+          "max_absolute_change": 0.0031004920788559875
+        },
+        {
+          "entry": "/38/tail_right",
+          "max_absolute_change": 0.0029362677407123172
+        },
+        {
+          "entry": "/38/tail_pdf",
+          "max_absolute_change": 0.0005928182890520273
+        },
+        {
+          "entry": "/38/empirical_test_risk/0.05/ES",
+          "max_absolute_change": 0.0031004920788559875
+        },
+        {
+          "entry": "/38/reference/ES",
+          "max_absolute_change": 0.0031004920788559875
+        },
+        {
+          "entry": "/40/grid",
+          "max_absolute_change": 0.0029362677407123172
+        },
+        {
+          "entry": "/40/comparison",
+          "max_absolute_change": 0.0031004920788559875
+        },
+        {
+          "entry": "/40/tail_right",
+          "max_absolute_change": 0.0029362677407123172
+        },
+        {
+          "entry": "/40/tail_pdf",
+          "max_absolute_change": 0.0005928182890520273
+        },
+        {
+          "entry": "/40/empirical_test_risk/0.05/ES",
+          "max_absolute_change": 0.0031004920788559875
+        },
+        {
+          "entry": "/40/reference/ES",
+          "max_absolute_change": 0.0031004920788559875
+        },
+        {
+          "entry": "/42/comparison",
+          "max_absolute_change": 0.0031004920788559875
+        },
+        {
+          "entry": "/42/tail_right",
+          "max_absolute_change": 0.0029362677407123172
+        },
+        {
+          "entry": "/42/tail_pdf",
+          "max_absolute_change": 0.0005928182890520273
+        },
+        {
+          "entry": "/42/empirical_test_risk/0.05/ES",
+          "max_absolute_change": 0.0031004920788559875
+        },
+        {
+          "entry": "/42/reference/ES",
+          "max_absolute_change": 0.0031004920788559875
+        },
+        {
+          "entry": "/44/grid",
+          "max_absolute_change": 0.002726534330661501
+        },
+        {
+          "entry": "/44/comparison",
+          "max_absolute_change": 0.0031004920788559875
+        },
+        {
+          "entry": "/44/tail_right",
+          "max_absolute_change": 0.0029362677407123172
+        },
+        {
+          "entry": "/44/tail_pdf",
+          "max_absolute_change": 0.0005928182890520273
+        },
+        {
+          "entry": "/44/empirical_test_risk/0.05/ES",
+          "max_absolute_change": 0.0031004920788559875
+        },
+        {
+          "entry": "/44/reference/ES",
+          "max_absolute_change": 0.0031004920788559875
+        },
+        {
+          "entry": "/44/right",
+          "max_absolute_change": 0.002726534330661501
+        },
+        {
+          "entry": "/46/comparison",
+          "max_absolute_change": 0.0031004920788559875
+        },
+        {
+          "entry": "/46/tail_right",
+          "max_absolute_change": 0.0029362677407123172
+        },
+        {
+          "entry": "/46/tail_pdf",
+          "max_absolute_change": 0.0005928182890520273
+        },
+        {
+          "entry": "/46/empirical_test_risk/0.05/ES",
+          "max_absolute_change": 0.0031004920788559875
+        },
+        {
+          "entry": "/46/reference/ES",
+          "max_absolute_change": 0.0031004920788559875
+        },
+        {
+          "entry": "/46/right",
+          "max_absolute_change": 0.002726534330661501
+        },
+        {
+          "entry": "/48/grid",
+          "max_absolute_change": 0.004340688910398294
+        },
+        {
+          "entry": "/48/comparison",
+          "max_absolute_change": 0.0031004920788559875
+        },
+        {
+          "entry": "/48/tail_right",
+          "max_absolute_change": 0.0029362677407123172
+        },
+        {
+          "entry": "/48/tail_pdf",
+          "max_absolute_change": 0.0005928182890520273
+        },
+        {
+          "entry": "/48/empirical_test_risk/0.05/ES",
+          "max_absolute_change": 0.0031004920788559875
+        },
+        {
+          "entry": "/48/rows",
+          "max_absolute_change": 0.011377004505691346
+        },
+        {
+          "entry": "/48/reference/ES",
+          "max_absolute_change": 0.0031004920788559875
+        },
+        {
+          "entry": "/48/right",
+          "max_absolute_change": 0.004340688910398294
+        },
+        {
+          "entry": "/50/grid",
+          "max_absolute_change": 0.004340688910398294
+        },
+        {
+          "entry": "/50/comparison",
+          "max_absolute_change": 0.011377004505691346
+        },
+        {
+          "entry": "/50/tail_right",
+          "max_absolute_change": 0.0029362677407123172
+        },
+        {
+          "entry": "/50/tail_pdf",
+          "max_absolute_change": 0.0005928182890520273
+        },
+        {
+          "entry": "/50/empirical_test_risk/0.05/ES",
+          "max_absolute_change": 0.0031004920788559875
+        },
+        {
+          "entry": "/50/rows",
+          "max_absolute_change": 0.011377004505691346
+        },
+        {
+          "entry": "/50/reference/ES",
+          "max_absolute_change": 0.0031004920788559875
+        },
+        {
+          "entry": "/50/right",
+          "max_absolute_change": 0.004340688910398294
+        },
+        {
+          "entry": "/50/test_es",
+          "max_absolute_change": 0.0031004920788559875
+        }
+      ]
+    },
+    "11_case_study_financial_time_series.ipynb.pickle": {
+      "compared": 805,
+      "missing": [],
+      "added": [],
+      "differences": [
+        {
+          "entry": "/32/empirical_es",
+          "max_absolute_change": 0.0070968061965919205
+        },
+        {
+          "entry": "/32/risk_comparison_oos",
+          "max_absolute_change": 0.007096806196591476
+        }
+      ]
+    }
+  },
+  "numeric_tolerance": {
+    "rtol": 1e-10,
+    "atol": 1e-12
+  },
+  "unchanged": [
+    "All other estimators and arch_models.py are byte-identical.",
+    "Data and rolling artifacts are byte-identical. The validated rolling cache was reused; no claim of regenerating all 752 fits.",
+    "Notebook structures, metadata and all unaffected notebook files are unchanged.",
+    "All unlisted displayed outputs and figures in executed notebooks match the baseline.",
+    "VaR, exceedance counts, fitted distribution parameters/ES, mean and dispersion scores, and rolling-model comparisons are unchanged."
+  ],
+  "remaining_issues": [
+    "Historical ES remains a finite-sample estimate with sparse-tail uncertainty.",
+    "Pre-existing rolling hold_back cache-signature omission is outside this change.",
+    "Unrestricted GARCH assumptions and numerical risks are unchanged."
+  ]
+}
