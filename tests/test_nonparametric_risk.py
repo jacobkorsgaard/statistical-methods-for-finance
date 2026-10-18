@@ -30,15 +30,13 @@ def test_qq_quantiles():
     np.testing.assert_allclose(theoretical,stats.t.ppf([.25,.75],5))
 
 
-def test_historical_loss_and_strict_tail():
+def test_historical_loss_and_integrated_tail():
     losses=[0,1,2,3,4]
     assert historical_var(losses,.4) == 2
     assert historical_es(losses,.4) == 3.5
     assert historical_var([-5,-3,-1],.5) == -3  # VaR need not be positive
-    with pytest.raises(ValueError):
-        historical_es([1,1,1],.05)
-    with pytest.raises(ValueError):
-        historical_es(losses,.01)  # quantile is the maximum
+    assert historical_es([1,1,1],.05) == 1
+    assert historical_es(losses,.01) == 4  # fractional mass at the maximum
 
 
 def test_parametric_loss_formulas_and_integrals():

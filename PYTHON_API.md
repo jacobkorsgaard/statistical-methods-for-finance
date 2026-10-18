@@ -154,7 +154,7 @@ rolling = expanding_arma_garch_forecasts(a, joint_fit, n_starts=2)
 
 [`finstats.risk`](src/finstats/risk.py) provides `historical_var/es(losses,alpha=.05)`, `gaussian_var/es(mu,sigma,alpha=.05)` and `student_t_var/es(location,scale,df,alpha=.05)` (each pair denotes two functions). Parametric inputs describe **losses**; alpha=.05 means the 95th loss quantile. Gaussian sigma is SD; t scale is not SD.
 
-Historical ES averages losses **strictly above** inverse-ECDF VaR and needs an exceedance. It differs from integrated-quantile ES with fractional boundary mass. Student-t ES requires df>1. Conditional unit-variance t models need scale=`sd*sqrt((df-2)/df)` and loss location equal to minus the return mean.
+Historical ES integrates the inverse empirical CDF over the upper alpha probability mass. It averages the largest `floor(n*alpha)` losses plus the fractional remainder of the next loss, divided by `n*alpha`. Ties receive only the required boundary mass; for `n*alpha<1`, ES equals the maximum loss. Student-t ES requires df>1. Conditional unit-variance t models need scale=`sd*sqrt((df-2)/df)` and loss location equal to minus the return mean.
 
 For other continuous return models, VaR is `-distribution.ppf(alpha)` and ES is `-distribution.expect(ub=distribution.ppf(alpha))/alpha`, when finite. For continuous loss models, use the upper quantile/tail instead.
 

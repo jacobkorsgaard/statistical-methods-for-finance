@@ -36,6 +36,8 @@ Retaining the overrides also retains their numerical costs: removing bounds and 
 
 ## Historical expected shortfall
 
+**Subsequent update:** the [expected-shortfall update](expected_shortfall_update.md) replaces the estimator described below with integrated empirical-quantile ES and regenerates affected outputs. This section records the earlier refactor, not the current estimator.
+
 Historical ES still averages losses **strictly greater** than the inverse-ECDF VaR. It can exclude tied boundary losses, average a fraction different from alpha of the sample, and fail when no strict exceedance exists. It differs from integrated empirical-quantile ES with fractional boundary mass. Deciding whether to adopt that alternative remains separate; tests continue to protect the current estimator.
 
 ## Validation

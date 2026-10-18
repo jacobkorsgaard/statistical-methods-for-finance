@@ -53,7 +53,9 @@ Empirical examples use fixed local snapshots and require no execution-time downl
 
 The `finstats` namespace contains focused reusable functionality, including custom multivariate estimators, joint ARMA–GARCH estimation, expanding-window forecasting, simulations and explicit empirical/risk conventions. Standard distribution, inference and time-series methods use NumPy, SciPy, statsmodels, pmdarima and arch. Elementary AR/MA and volatility formulas live in the notebooks, with direct library calls for roots, estimation and forecasts. Empirical and dependence helpers delegate standard calculations to NumPy/statsmodels while preserving the stated conventions.
 
-The [simplification review](artifacts/statistical_simplification_review.md) records removed APIs, numerical validation, the retained arch constraint overrides and the pending historical ES convention. The [Python API guide](PYTHON_API.md) documents both custom interfaces and third-party methods, with examples, parameterizations and statistical conventions. The notebooks provide the accompanying mathematical exposition and applications.
+Historical ES uses the integrated empirical quantile estimator, including fractional boundary mass and ties; see Notebook 04 and the [ES update and validation](artifacts/expected_shortfall_update.md).
+
+The [simplification review](artifacts/statistical_simplification_review.md) records removed APIs, numerical validation, the retained arch constraint overrides and the historical ES convention at the time of that refactor. The [Python API guide](PYTHON_API.md) documents both custom interfaces and third-party methods, with examples, parameterizations and statistical conventions. The notebooks provide the accompanying mathematical exposition and applications.
 
 ## Possible Extensions
 
